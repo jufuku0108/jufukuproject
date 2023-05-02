@@ -1,0 +1,137 @@
+ apiVersion: storage.k8s.io/v1
+kind: StorageClass 
+metadata:   
+  name: {{ .Values.projectRoot.kind.storageClass.azurefilecsi.metadata.name}}
+provisioner: {{ .Values.projectRoot.kind.storageClass.azurefilecsi.metadata.provisioner}}
+#provisioner: file.csi.azure.com 
+
+---
+
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: {{ .Values.projectRoot.kind.persistentVolumeClaim.jufukuvolstaticpvc.metadata.name}}
+spec:
+  {{- toYaml .Values.projectRoot.kind.persistentVolumeClaim.jufukuvolstaticpvc.spec | nindent 2}}
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Values.projectRoot.kind.deployment.metadata.name }}
+  labels:
+    # {{- include "jufukuproject.labels" . | nindent 4 }}
+    {{- toYaml .Values.projectRoot.kind.deployment.metadata.labels | nindent 4}}
+spec:
+  {{- if not .Values.autoscaling.enabled }}
+  replicas: {{ .Values.projectRoot.kind.deployment.spec.replicas }}
+  {{- end }}
+  selector:
+    matchLabels:
+      # {{- include "jufukuproject.selectorLabels" . | nindent 6 }}
+      {{- toYaml .Values.projectRoot.kind.deployment.spec.selector.matchLabels | nindent 6}}
+      
+  template:
+    metadata:
+      {{- with .Values.podAnnotations }}
+      annotations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      labels:
+        # {{- include "jufukuproject.selectorLabels" . | nindent 8 }}
+        {{- toYaml .Values.projectRoot.kind.deployment.spec.template.metadata.labels | nindent 8}}
+    spec:
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      serviceAccountName: {{ include "jufukuproject.serviceAccountName" . }}
+      securityContext:
+        {{- toYaml .Values.podSecurityContext | nindent 8 }}
+      containers:
+        - name: {{ .Values.projectRoot.kind.deployment.spec.template.spec.containers.web.name }}
+          image: {{ .Values.projectRoot.kind.deployment.spec.template.spec.containers.web.image }}
+          tty: true
+          ports:
+            # - name: http
+            #   containerPort: {{ .Values.service.port }}
+            #   protocol: TCP
+            {{- toYaml .Values.projectRoot.kind.deployment.spec.template.spec.containers.web.ports | nindent 12}}
+          # livenessProbe:
+          #   httpGet:
+          #     path: /
+          #     port: 80
+          # readinessProbe:
+          #   httpGet:
+          #     path: /
+          #     port: 80
+          command:
+            {{- toYaml .Values.projectRoot.kind.deployment.spec.template.spec.containers.web.command | nindent 12}}
+          env:
+            {{- toYaml .Values.projectRoot.kind.deployment.spec.template.spec.containers.web.env | nindent 12}}
+          resources:
+            {{- toYaml .Values.projectRoot.kind.deployment.spec.template.spec.containers.web.resources | nindent 12 }}
+          volumeMounts:
+            {{- toYaml .Values.projectRoot.kind.deployment.spec.template.spec.containers.web.volumeMounts | nindent 12 }}
+
+   
+        - name: {{ .Values.projectRoot.kind.deployment.spec.template.spec.containers.application.name }}
+          image: {{ .Values.projectRoot.kind.deployment.spec.template.spec.containers.application.image }}
+          tty: true
+          ports:
+            # - name: http
+            #   containerPort: {{ .Values.service.port }}
+            #   protocol: TCP
+            {{- toYaml .Values.projectRoot.kind.deployment.spec.template.spec.containers.application.ports | nindent 12}}
+          # livenessProbe:
+          #   httpGet:
+          #     path: /
+          #     port: 8000
+          # readinessProbe:
+          #   httpGet:
+          #     path: /
+          #     port: 8000
+          command:
+            {{- toYaml .Values.projectRoot.kind.deployment.spec.template.spec.containers.application.command | nindent 12}}
+          env:
+            {{- toYaml .Values.projectRoot.kind.deployment.spec.template.spec.containers.application.env | nindent 12}}
+          resources:
+            {{- toYaml .Values.projectRoot.kind.deployment.spec.template.spec.containers.application.resources | nindent 12 }}
+          volumeMounts:
+            {{- toYaml .Values.projectRoot.kind.deployment.spec.template.spec.containers.application.volumeMounts | nindent 12 }}
+      volumes:
+        {{- toYaml .Values.projectRoot.kind.deployment.spec.template.spec.volumes | nindent 8 }}
+     
+  
+      {{- with .Values.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+
+---
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ .Values.projectRoot.kind.service.web.metadata.name }}
+  labels:
+    {{- toYaml .Values.projectRoot.kind.service.web.metadata.labels | nindent 4 }}
+spec:
+  type: {{ .Values.projectRoot.kind.service.web.spec.type }}
+  ports:
+    # - port: {{ .Values.service.port }}
+    #   targetPort: http
+    #   protocol: TCP
+    #   name: http
+    {{- toYaml .Values.projectRoot.kind.service.web.spec.ports | nindent 4}}
+  selector:
+    {{- toYaml .Values.projectRoot.kind.service.web.spec.selector | nindent 4 }}
+

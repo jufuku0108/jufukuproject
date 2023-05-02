@@ -1,0 +1,10 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: {{ .Values.projectRoot.kind.ingress.metadata.name}}
+  annotations: {{- toYaml .Values.projectRoot.kind.ingress.metadata.annotations | nindent 4}}
+spec:
+  ingressClassName: {{ .Values.projectRoot.kind.ingress.spec.ingressClassName}}
+  #ingressClassName: ingress-nginx
+  tls: {{- toYaml .Values.projectRoot.kind.ingress.spec.tls | nindent 4}}
+  rules: {{- toYaml .Values.projectRoot.kind.ingress.spec.rules | nindent 4}}

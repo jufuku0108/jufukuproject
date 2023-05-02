@@ -1,0 +1,309 @@
+# Default values for jufukuproject.
+# This is a YAML-formatted file.
+# Declare variables to be passed into your templates.
+
+projectRoot:
+  kind:
+    deployment:
+      metadata:
+        name: jufuku-web-dplmnt
+        labels:
+          app: web
+      spec:
+        replicas: 1
+        selector:
+          matchLabels:
+            app: web
+        template:
+          metadata:
+            labels:
+              app: web
+          spec:
+            containers:
+              web:
+                name: web
+                image: jufukuacr01.azurecr.io/web:v1.1.0
+                ports:
+                - containerPort: 80
+                command:
+                - sh
+                - -c
+                - "envsubst '$$APP_SERVICE_NAME $$APP_HOST_NAME' < /etc/nginx/conf.d/appservers.conf.template > /etc/nginx/conf.d/appservers.conf && nginx -g 'daemon off;'"
+                env:
+                - name: APP_SERVICE_NAME
+                  valueFrom:
+                    configMapKeyRef:
+                      name: jufuku-configmap
+                      key: APP_SERVICE_NAME
+                - name: APP_HOST_NAME
+                  valueFrom:
+                    configMapKeyRef:
+                      name: jufuku-configmap
+                      key: APP_HOST_NAME
+                resources: {}
+
+              application:
+                name: application
+                image: jufukuacr01.azurecr.io/application:v1.4.0
+                tty: true
+                ports:
+                - containerPort: 8000
+                command:
+                - sh
+                - -c
+                - "python manage.py migrate && python manage.py collectstatic --no-input && gunicorn config.wsgi:application --bind 0.0.0.0:8000"
+                env:
+                - name: SECRET_KEY
+                  valueFrom:
+                    configMapKeyRef:
+                      name: jufuku-configmap
+                      key: SECRET_KEY
+                - name: POSTGRES_ENGINE
+                  valueFrom:
+                    configMapKeyRef:
+                      name: jufuku-configmap
+                      key: POSTGRES_ENGINE
+                - name: POSTGRES_DB
+                  valueFrom:
+                    configMapKeyRef:
+                      name: jufuku-configmap
+                      key: POSTGRES_DB
+                - name: POSTGRES_USER
+                  valueFrom:
+                    configMapKeyRef:
+                      name: jufuku-configmap
+                      key: POSTGRES_USER
+                - name: POSTGRES_PASSWORD
+                  valueFrom:
+                    configMapKeyRef:
+                      name: jufuku-configmap
+                      key: POSTGRES_PASSWORD
+                - name: POSTGRES_HOST
+                  valueFrom:
+                    configMapKeyRef:
+                      name: jufuku-configmap
+                      key: POSTGRES_HOST
+                - name: POSTGRES_PORT
+                  valueFrom:
+                    configMapKeyRef:
+                      name: jufuku-configmap
+                      key: POSTGRES_PORT
+                resources: {}
+                volumeMounts:
+                - mountPath: /codes/static
+                  name: vol-static
+            volumes:
+            - name: vol-static
+              persistentVolumeClaim:
+                claimName: jufuku-vol-static-pvc
+    statefulset:
+      metadata:
+        name: jufuku-db-sttflst
+        labels:
+          app: db
+      spec:
+        replicas: 1
+        serviceName: db
+        selector:
+          matchLabels:
+            app: db
+        template:
+          metadata:
+            labels:
+              app: db
+          spec:
+            containers:
+              name: db
+              image: jufukuacr01.azurecr.io/db:v1.0.0
+              env:
+              - name: PGDATA
+                valueFrom:
+                  configMapKeyRef:
+                    name: jufuku-configmap
+                    key: PGDATA
+              - name: POSTGRES_DB
+                valueFrom:
+                  configMapKeyRef:
+                    name: jufuku-configmap
+                    key: POSTGRES_DB
+              - name: POSTGRES_USER
+                valueFrom:
+                  configMapKeyRef:
+                    name: jufuku-configmap
+                    key: POSTGRES_USER
+              - name: POSTGRES_PASSWORD
+                valueFrom:
+                  configMapKeyRef:
+                    name: jufuku-configmap
+                    key: POSTGRES_PASSWORD
+              resources: {}
+              ports:
+              - containerPort: 5432
+              volumeMounts:
+              - mountPath: /var/lib/postgresql/data
+                name: my-vol
+        volumeClaimTemplates:
+          metadata:
+            name: my-vol
+          spec:
+            accessModes: ["ReadWriteOnce"]
+            storageClassName: "managed-csi"
+            resources:
+              requests:
+                storage: 5Gi
+    service:
+      web:
+        metadata:
+          name: websvc
+          labels:
+            app: web
+        spec:
+          type: ClusterIP
+          selector:
+            app: web
+          ports:
+          - port: 80
+            protocol: TCP
+            targetPort: 80
+      db:
+        metadata:
+          name: dbsvc
+          labels:
+            app: db
+        spec:
+          type: ClusterIP
+          selector:
+            app: db
+          ports:
+          - port: 5432
+            protocol: TCP
+            targetPort: 5432
+    configMap:
+      metadata:
+        name: jufuku-configmap
+      data:
+        SECRET_KEY: django-insecure--jufuku-testmode
+        PGDATA: /var/lib/postgresql/data/database
+        POSTGRES_ENGINE: django.db.backends.postgresql_psycopg2
+        POSTGRES_DB: postgres
+        POSTGRES_USER: user01
+        POSTGRES_PASSWORD: hogehoge01
+        POSTGRES_HOST: dbsvc
+        POSTGRES_PORT: '5432'
+        APP_SERVICE_NAME: localhost:8000
+        APP_HOST_NAME: admin.jfadm170.net
+    storageClass:
+      azurefilecsi:
+        metadata:
+          name: azurefile-csi
+          provisioner: docker.io/hostpath
+      managedcsi:
+        metadata:
+          name: managed-csi
+          provisioner: docker.io/hostpath
+    persistentVolumeClaim:
+      jufukuvolstaticpvc:
+        metadata:
+          name: jufuku-vol-static-pvc
+        spec:
+          storageClassName: azurefile-csi
+          accessModes:
+          - ReadWriteMany
+          resources:
+            requests:
+              storage: 256Mi
+    ingress:
+      metadata:
+        name: jufuku-ingress
+        annotations:
+          nginx.ingress.kubernetes.io/rewrite-target: /$2
+          nginx.ingress.kubernetes.io/use-regex: "true"
+          cert-manager.io/cluster-issuer: letsencrypt
+      spec:
+        ingressClassName: nginx
+        tls:
+        - hosts:
+          - admin.jfadm170.net
+          secretName: jufuku-secret
+        rules:
+        - host: admin.jfadm170.net
+          http:
+            paths:
+            - path: /
+              pathType: Prefix
+              backend:
+                service:
+                  name: websvc
+                  port:
+                    number: 80
+
+imagePullSecrets: []
+nameOverride: ""
+fullnameOverride: ""
+
+serviceAccount:
+  # Specifies whether a service account should be created
+  create: true
+  # Annotations to add to the service account
+  annotations: {}
+  # The name of the service account to use.
+  # If not set and create is true, a name is generated using the fullname template
+  name: ""
+
+podAnnotations: {}
+
+podSecurityContext: {}
+# fsGroup: 2000
+
+securityContext: {}
+# capabilities:
+#   drop:
+#   - ALL
+# readOnlyRootFilesystem: true
+# runAsNonRoot: true
+# runAsUser: 1000
+
+service:
+  type: ClusterIP
+  port: 80
+
+ingress:
+  enabled: false
+  className: ""
+  annotations: {}
+  # kubernetes.io/ingress.class: nginx
+  # kubernetes.io/tls-acme: "true"
+  hosts:
+  - host: chart-example.local
+    paths:
+    - path: /
+      pathType: ImplementationSpecific
+  tls: []
+  #  - secretName: chart-example-tls
+#    hosts:
+#      - chart-example.local
+
+resources: {}
+# We usually recommend not to specify default resources and to leave this as a conscious
+# choice for the user. This also increases chances charts run on environments with little
+# resources, such as Minikube. If you do want to specify resources, uncomment the following
+# lines, adjust them as necessary, and remove the curly braces after 'resources:'.
+# limits:
+#   cpu: 100m
+#   memory: 128Mi
+# requests:
+#   cpu: 100m
+#   memory: 128Mi
+
+autoscaling:
+  enabled: false
+  minReplicas: 1
+  maxReplicas: 100
+  targetCPUUtilizationPercentage: 80
+  # targetMemoryUtilizationPercentage: 80
+
+nodeSelector: {}
+
+tolerations: []
+
+affinity: {}
