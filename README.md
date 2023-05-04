@@ -132,6 +132,17 @@ helm upgrade --install jufukuproject-release ./helm --namespace myapps -f ./helm
 
 ```
 
+## Upload git
+
+- Remove secret strings from prodvalues.yaml
+- Upload git
+
+```comandline
+git add -A
+git commit -m "update"
+git push -u origin main
+```
+
 ## Useful commands for trouble shooting
 
 ```commandline
