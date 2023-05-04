@@ -4,12 +4,19 @@
 
 ### Develop Docker image
 
-- Modify code and debug in application folder.
+```console
+git clone https://github.com/jufuku0108/jufukuproject.git
+```
+
+- Modify code and debug in docker/application folder.
+
 - Test with other image using docker-compose.
 
 ```console
 cd docker
+
 docker-compose up -d --force-recreate
+
 docker-compose down
 ```
 
@@ -18,6 +25,7 @@ docker-compose down
 
 ```console
 az acr login --name jufukuacr01.azurecr.io
+
 docker-compose push
 ```
 
@@ -56,6 +64,7 @@ kubectl port-forward --namespace=myapps service/ingress-nginx-controller 8080:44
 - (options) Remove resouces from docker-desktop.
 
 ```comandline
+
 helm uninstall jufukuproject-release -n=myapps
 
 kubectl delete pvc jufuku-vol-static-pvc -n=myapps
@@ -68,8 +77,6 @@ kubectl delete pvc my-vol-jufuku-db-sttflst-0 -n=myapps
 ### Create AKS
 
 ```comandline
-cd azure
-
 az aks create --resource-group rg4containers --name jufukuk8s01 --node-count 1 --generate-ssh-keys --attach-acr jufukuacr01
 
 az aks update -n jufukuk8s01 -g rg4containers --enable-disk-driver --enable-file-driver 
@@ -85,6 +92,8 @@ az aks show -g rg4containers -n jufukuk8s01 --query addonProfiles.azureKeyvaultS
 
 ```comandline
 az aks get-credentials --resource-group rg4containers --name jufukuk8s01
+
+cd azure
 
 kubectl create namespace myapps 
 
@@ -119,11 +128,7 @@ kubectl apply -f jufuku-cluster-issuer.yaml --namespace myapps
 ```comandline
 az aks get-credentials --resource-group rg4containers --name jufukuk8s01
 
-helm repo add myrepo https://jufuku0108.github.io/jufukuproject/helm/
-
-helm repo update
-
-helm upgrade --install jufukuproject-release myrepo/jufukuproject --namespace myapps
+helm upgrade --install jufukuproject-release ./helm --namespace myapps -f ./helm/prodvalues.yaml
 
 ```
 

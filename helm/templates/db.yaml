@@ -4,7 +4,6 @@ kind: StorageClass
 metadata:   
   name: {{ .Values.projectRoot.kind.storageClass.managedcsi.metadata.name}} 
 provisioner: {{ .Values.projectRoot.kind.storageClass.managedcsi.metadata.provisioner}}
-#provisioner: disk.csi.azure.com
 
 
 ---

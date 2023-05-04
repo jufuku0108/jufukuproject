@@ -1,0 +1,47 @@
+projectRoot:
+  kind:
+    deployment:
+      spec:
+        replicas: 1
+        template:
+          spec:
+            containers:
+              web:
+                image: jufukuacr01.azurecr.io/web:v1.1.0
+                resources: {}
+
+              application:
+                image: jufukuacr01.azurecr.io/application:v1.4.0
+                resources: {}
+
+    statefulset:
+      spec:
+        replicas: 1
+        template:
+          spec:
+            containers:
+              image: jufukuacr01.azurecr.io/db:v1.0.0
+              resources: {}
+    configMap:
+      data:
+        SECRET_KEY: django-insecure--xxxxxxxxxxxx
+        PGDATA: /var/lib/postgresql/data/database
+        POSTGRES_ENGINE: django.db.backends.postgresql_psycopg2
+        POSTGRES_DB: xxxxxxxxxxxx
+        POSTGRES_USER: xxxxxxxxxxxx
+        POSTGRES_PASSWORD: xxxxxxxxxxxx
+        POSTGRES_HOST: dbsvc
+        POSTGRES_PORT: '5432'
+        APP_SERVICE_NAME: localhost:8000
+        APP_HOST_NAME: admin.jfadm170.net
+    storageClass:
+      azurefilecsi:
+        metadata:
+          provisioner: disk.csi.azure.com
+      managedcsi:
+        metadata:
+          provisioner: file.csi.azure.com
+
+    ingress:
+      spec:
+        ingressClassName: nginx

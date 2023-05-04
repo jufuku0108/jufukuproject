@@ -3,7 +3,6 @@ kind: StorageClass
 metadata:   
   name: {{ .Values.projectRoot.kind.storageClass.azurefilecsi.metadata.name}}
 provisioner: {{ .Values.projectRoot.kind.storageClass.azurefilecsi.metadata.provisioner}}
-#provisioner: file.csi.azure.com 
 
 ---
 
