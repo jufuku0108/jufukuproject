@@ -139,7 +139,9 @@ helm upgrade --install jufukuproject-release ./helm --namespace myapps -f ./helm
 
 ```comandline
 git add -A
+
 git commit -m "update"
+
 git push -u origin main
 ```
 
