@@ -8,9 +8,13 @@
 
 ```console
 git clone https://github.com/jufuku0108/jufukuproject.git
+
+cd jufukuproject/docker
 ```
 
-- Change DB settings to use SQLITE for test.
+#### Unit development
+
+- Change DB settings in docker/application/config/settings.py to use SQLITE for test.
 
 ```python
 DATABASES = {
@@ -28,7 +32,20 @@ DATABASES = {
 
 ```
 
+- Change SECRET_KEY in the same file to test string.
+
+```python
+SECRET_KEY = "django-insecure--xxxxxxxxxxxx"
+```
+
 - Modify code and debug in docker/application folder and test run.
+
+```console
+python manage.py migrate
+python manage.py runserver
+```
+
+#### Docker-compose development
 
 - Change DB settings to use POSTGRESS and remove SQLITE db file.
 
@@ -48,6 +65,12 @@ DATABASES = {
 
 ```
 
+- Change SECRET_KEY in the same file as below.
+
+```python
+SECRET_KEY = os.environ.get("SECRET_KEY")
+```
+
 - Run with other image using docker-compose.
 
 ```console
@@ -55,8 +78,10 @@ cd docker
 
 docker-compose up -d --force-recreate
 
-docker-compose down
+docker-compose down -v
 ```
+
+#### Update image tab and upload
 
 - Modify tag on docker-compose.yaml.
 - Upload each images to ACR.
