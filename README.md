@@ -4,13 +4,51 @@
 
 ### Develop Docker image
 
+- Download project
+
 ```console
 git clone https://github.com/jufuku0108/jufukuproject.git
 ```
 
-- Modify code and debug in docker/application folder.
+- Change DB settings to use SQLITE for test.
 
-- Test with other image using docker-compose.
+```python
+DATABASES = {
+    'default': {
+        'ENGINE': 'django.db.backends.sqlite3',
+        'NAME': BASE_DIR / 'db.sqlite3',
+        # 'ENGINE': os.environ.get("POSTGRES_ENGINE"),
+        # 'NAME': os.environ.get("POSTGRES_DB"),
+        # 'USER': os.environ.get("POSTGRES_USER"),
+        # 'PASSWORD': os.environ.get("POSTGRES_PASSWORD"),
+        # 'HOST': os.environ.get("POSTGRES_HOST"),
+        # 'PORT': os.environ.get("POSTGRES_PORT"),
+    }
+}
+
+```
+
+- Modify code and debug in docker/application folder and test run.
+
+- Change DB settings to use POSTGRESS and remove SQLITE db file.
+
+```python
+DATABASES = {
+    'default': {
+        # 'ENGINE': 'django.db.backends.sqlite3',
+        # 'NAME': BASE_DIR / 'db.sqlite3',
+        'ENGINE': os.environ.get("POSTGRES_ENGINE"),
+        'NAME': os.environ.get("POSTGRES_DB"),
+        'USER': os.environ.get("POSTGRES_USER"),
+        'PASSWORD': os.environ.get("POSTGRES_PASSWORD"),
+        'HOST': os.environ.get("POSTGRES_HOST"),
+        'PORT': os.environ.get("POSTGRES_PORT"),
+    }
+}
+
+```
+
+- Run with other image using docker-compose.
 
 ```console
 cd docker
