@@ -1,0 +1,104 @@
+
+{% extends 'base.html' %}
+{% block maincontent %}
+
+
+
+  <div class="container">
+    
+    <div class="row">
+      <div class="col-4">
+        <h3>Logs</h3>
+      </div>
+    </div>
+  </div>
+
+  <br>
+  <div class="text-center">
+    <div id="spn" class="spinner-border text-primary" role="status">
+      <span class="visually-hidden">Loading...</span>
+    </div>
+  </div>
+
+  <table class="table table-hover">
+    <thead>
+      <tr>
+        <th scope="col">DateTime</th>
+        <th scope="col">Type</th>
+        <th scope="col">Method</th>
+        <th scope="col">StatusCode</th>
+        <th scope="col">IpAddress</th>
+        <th scope="col">Url</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for httplog in httploglist%}
+          <tr onclick=togglerow('hidden_row{{forloop.counter}}')>
+            <td>{{httplog.DateTime}}</td>
+            <td>{{httplog.Type}}</td>
+            <td>{{httplog.Method}}</td>
+            <td>{{httplog.StatusCode}}</td>
+            <td>{{httplog.IpAddress}}</td>
+            <td>{{httplog.Url}}</td>
+   
+          </tr>
+          <tr id="hidden_row{{forloop.counter}}" style="visibility:collapse">
+            <td colspan=6 style="word-wrap: break-word;min-width: 160px;max-width: 160px;"><strong>Heders </strong>{{httplog.Headers}}<br><br><strong>Body </strong>{{httplog.Body}}</td>
+          </tr>          
+      {% endfor %}
+    </tbody>
+  </table>
+
+  <div class="container">
+    <div class="row">
+      <div class="col-4">
+        <p class="col-4 text-center">Total {{pagination.TotalCount}} items.</p>
+      </div>
+
+      <div class="col-4">
+        <ul class="pagination justify-content-center">
+          {% if pagination.CurrentPage|add:"-1" > 0 %}
+            <li class="page-item"><a class="page-link" href={% url 'logs:listhttplogs' %}?pageNumber={{pagination.CurrentPage|add:"-1"}}&pageSize={{pagination.PageSize}}>Previous</a></li>
+            <li class="page-item"><a class="page-link" href={% url 'logs:listhttplogs' %}?pageNumber={{pagination.CurrentPage|add:"-1"}}&pageSize={{pagination.PageSize}}>{{pagination.CurrentPage|add:"-1"}}</a></li>
+          {% endif %}
+          
+          <li class="page-item disabled"><a class="page-link" href=#>{{pagination.CurrentPage}}</a></li>
+          
+          {% if pagination.CurrentPage|add:"1" <= pagination.TotalPages%}
+            <li class="page-item"><a class="page-link" href={% url 'logs:listhttplogs' %}?pageNumber={{pagination.CurrentPage|add:"1"}}&pageSize={{pagination.PageSize}}>{{pagination.CurrentPage|add:"1"}}</a></li>         
+          {% endif %}
+          
+          {% if pagination.CurrentPage|add:"2" <= pagination.TotalPages%}
+            <li class="page-item"><a class="page-link" href={% url 'logs:listhttplogs' %}?pageNumber={{pagination.CurrentPage|add:"2"}}&pageSize={{pagination.PageSize}}>{{pagination.CurrentPage|add:"2"}}</a></li>
+          {% endif %}
+
+          {% if pagination.CurrentPage|add:"3" <= pagination.TotalPages%}
+            <li class="page-item disabled"><a class="page-link" href=#>...</a></li>
+          {% endif %}
+          
+          {% if pagination.CurrentPage|add:"1" <= pagination.TotalPages%}        
+            <li class="page-item"><a class="page-link" href={% url 'logs:listhttplogs' %}?pageNumber={{pagination.CurrentPage|add:"1"}}&pageSize={{pagination.PageSize}}>Next</a></li>
+          {% endif %}
+
+        </ul>
+      </div>
+
+      <div class="col-4">
+        <div class="text-center">
+          <select id="page_item_numbers" onchange=changeItemNumbers(this.value) style="border-radius: 5px;border: 1px solid #dee2e6">
+            <option id="op10" value="{% url 'logs:listhttplogs' %}?pageNumber={{pagination.CurrentPage}}&pageSize=10">10 items.</option>
+            <option id="op20" value="{% url 'logs:listhttplogs' %}?pageNumber={{pagination.CurrentPage}}&pageSize=20">20 items.</option>
+            <option id="op30" value="{% url 'logs:listhttplogs' %}?pageNumber={{pagination.CurrentPage}}&pageSize=30">30 items.</option>
+          </select>
+        </div>
+      </div>
+
+    </div>
+  </div>
+  
+  {% load static %}
+
+  <script src="{% static 'js/script.js' %}"></script>
+
+
+{% endblock %}

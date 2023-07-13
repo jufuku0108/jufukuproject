@@ -1,0 +1,77 @@
+
+{% extends 'base.html' %}
+{% block maincontent %}
+<div class="container bootstrap snippet">
+  <div class="row">
+    <div class="col-sm-10"><h1>{{user.username}}</h1></div>
+
+  </div>
+    <div class="row">        
+      <div class="col-3"><!--left col-->
+        <div class="text-center">
+          {% load static %}
+          <img src="{% static "/home/avatar.png" %}" class="avatar img-circle img-thumbnail" alt="avatar">
+
+          <div class="panel panel-default">
+            <div class="panel-heading">Social Media</div>
+            <div class="panel-body">
+              <a href="https://sts.jfadm170.net/AccountManage/MyProfile" target="_blank">Account Provider</a>
+            </div>
+          </div>
+        </div>       
+      </div><!--/col-3-->
+      
+      <div class="col-9">                  
+            <hr>
+            <form class="form" action="##" method="post" id="registrationForm">
+                {% load socialaccount %}  
+                {% get_social_accounts user as accounts %}
+                {% get_providers as socialaccount_providers %}
+
+                <div class="form-group">
+                    <div class="col-xs-6">
+                        <label for="first_name"><h4>Id</label>
+                        <input type="text" readonly class="form-control" name="userid" id="userid" placeholder="userid" title="useridy." value={{user.id}}>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <div class="col-xs-6">
+                        <label for="first_name"><h4>First name</h4></label>
+                        <input type="text" readonly class="form-control" name="first_name" id="first_name" placeholder="first name" title="enter your first name if any." value={{user.first_name}}>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <div class="col-xs-6">
+                    <label for="last_name"><h4>Last name</h4></label>
+                        <input type="text" readonly class="form-control" name="last_name" id="last_name" placeholder="last name" title="enter your last name if any." value={{user.last_name}}>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <div class="col-xs-6">
+                        <label for="email"><h4>Email</h4></label>
+                        <input type="email" readonly class="form-control" name="email" id="email" placeholder="you@email.com" title="enter your email." value={{user.email}}>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <div class="col-xs-6">
+                        <label for="date_joined"><h4>Date Joined</h4></label>
+                        <input type="date_joined" readonly class="form-control" id="date_joined" placeholder="date_joined" title="date_joined" value="{{user.date_joined|date:"Y-m-j H:i:s"}}">
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <div class="col-xs-6">
+                        <label for="last_login"><h4>Last Login</h4></label>
+                        <input type="last_login" readonly class="form-control" id="last_login" placeholder="last_login" title="last_login" value="{{user.last_login|date:"Y-m-j H:i:s"}}">
+                    </div>
+                </div>
+
+            </form>
+                
+            <hr>
+                
+    </div><!--/col-9-->
+  </div><!--/row-->
+</div>
+{% endblock %}

@@ -1,0 +1,163 @@
+
+{% extends 'base.html' %}
+{% block maincontent %}
+  <div class="p-5">
+    <div class="container">
+      <div class="row">
+        <div class="col-6">
+          <div class="card text-center">
+            <div class="card-body">
+              <h5 class="card-title">Users</h5>
+              <p id="userCount" class="card-text fs-3">0</p>
+              <a href="/users" class="btn btn-primary">User list</a>
+            </div>
+          </div>
+        </div>
+        <div class="col-6">
+          <div class="card text-center">
+            <div class="card-body">
+              <h5 class="card-title">Groups</h5>
+              <p id="groupCount"class="card-text fs-3">0</p>
+              <a href="/groups" class="btn btn-primary">Group list</a>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="container">
+      <div class="row">
+        <div class="col-8">
+          <div class="mt-5">
+            <div class="chart-container" style="height:70vh;">
+              <canvas id="myChart"></canvas>
+            </div>
+          </div>
+        </div>
+        <div class="col-4">
+          <div class="mt-5">
+            <div class="chart-container" style="height:40vh; width:30vw">
+              <canvas id="myChart2" ></canvas>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+    
+   </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+  <script>
+    var accessDate = [];
+    var accessData = [];
+    var userCount= [];
+    var groupCount= [];
+    var totalUserCount;
+    var totalGroupCount;
+    var totalGetCount = 0;
+    var totalPostCount = 0;
+    var totalPatchCount = 0;
+    var totalDeleteCount = 0;
+
+    {% for item in statistics %}
+      accessDate.push('{{item.DateTime|cut:"T00:00:00"}}')
+      accessData.push({{item.TotalAccessCount}})
+      userCount.push({{item.TotalUserCount}})
+      groupCount.push({{item.TotalGroupCount}})
+
+      totalGetCount =  totalGetCount + {{item.TotalGetCount}}
+      totalPostCount =  totalPostCount + {{item.TotalPostCount}}
+      totalPatchCount =  totalPatchCount + {{item.TotalPatchCount}}
+      totalDeleteCount =  totalDeleteCount + {{item.TotalDeleteCount}}
+
+      {% if forloop.last %}
+        totalUserCount = {{item.TotalUserCount}}
+        totalGroupCount = {{item.TotalGroupCount}}
+      {% endif %}
+    {% endfor %}
+
+
+    var uc = document.getElementById('userCount');
+    var gc = document.getElementById('groupCount');
+
+    uc.innerHTML = totalUserCount;
+    gc.innerHTML = totalGroupCount;
+
+    const ctx = document.getElementById('myChart');
+    const ctx2 = document.getElementById('myChart2');
+
+    new Chart(ctx, {
+      data: {
+        labels: accessDate,
+        datasets: [
+          {
+            label: 'Access Counts',
+            data: accessData,
+            type: 'line',
+            yAxisID: "lineChart",
+          },
+          {
+            label: 'Users',
+            data: userCount,
+            type: 'bar',
+            yAxisID: "barChart"
+          },
+          {
+            label: 'Groups',
+            data: groupCount,
+            type: 'bar',
+            yAxisID: "barChart"
+          }
+        ]
+      },
+      options: {
+        responsive: true,
+        plugins: {
+          title: {
+            display: true,
+            text: "Number of access counts for 2 weeks."
+          }
+        },
+        scales: {
+          "lineChart": {
+            position: "left",
+          },
+          "barChart": {
+            position: "right",
+          }
+        }
+      }
+    });
+
+
+    new Chart(ctx2, {
+      type: 'doughnut',
+      data: {
+        labels: ['GET', 'POST', 'PATCH', 'DELETE'],
+        datasets: [
+          {
+            label: 'Total',
+            data: [totalGetCount, totalPostCount, totalPatchCount, totalDeleteCount],
+          }
+        ]
+      },
+      options: {
+        responsive: true,
+        plugins: {
+          title: {
+            display: true,
+            text: "Number of method counts for 2 weeks."
+          }
+        },
+        scales: {
+
+        }
+      }
+    });
+
+  </script>
+
+
+{% endblock %}

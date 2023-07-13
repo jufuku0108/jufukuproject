@@ -7,21 +7,23 @@ projectRoot:
           spec:
             containers:
               web:
-                image: jufukuacr01.azurecr.io/web:v1.1.0
+                image: jufukuacr01.azurecr.io/web:v1.4.0
                 resources: {}
 
               application:
-                image: jufukuacr01.azurecr.io/application:v1.4.0
+                image: jufukuacr01.azurecr.io/application:v1.6.0
                 resources: {}
-
     statefulset:
       spec:
         replicas: 1
         template:
           spec:
             containers:
-              image: jufukuacr01.azurecr.io/db:v1.0.0
+              image: jufukuacr01.azurecr.io/db:v1.10.0
               resources: {}
+        volumeClaimTemplates:
+          spec:
+            storageClassName: managed-csi
     configMap:
       data:
         SECRET_KEY: django-insecure--xxxxxxxxxxxx
@@ -33,7 +35,9 @@ projectRoot:
         POSTGRES_HOST: dbsvc
         POSTGRES_PORT: '5432'
         APP_SERVICE_NAME: localhost:8000
-        APP_HOST_NAME: admin.jfadm170.net
+        APP_HOST_NAME: xxx.xxx.xxx
+        OAUTH_SERVER_BASEURL: https://xxx.xxx.xxx
+        API_BASEURL: https://xxx.xxx.xxx
     storageClass:
       azurefilecsi:
         metadata:
@@ -41,7 +45,10 @@ projectRoot:
       managedcsi:
         metadata:
           provisioner: file.csi.azure.com
-
+    persistentVolumeClaim:
+      jufukuvolstaticpvc:
+        spec:
+          storageClassName: azurefile-csi
     ingress:
       spec:
-        ingressClassName: nginx
+        ingressClassName: ingress-nginx

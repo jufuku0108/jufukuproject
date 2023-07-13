@@ -32,17 +32,30 @@ DATABASES = {
 
 ```
 
-- Change SECRET_KEY in the same file to test string.
+- Add local env.
 
-```python
-SECRET_KEY = "django-insecure--xxxxxxxxxxxx"
+```comandline
+$Env:SECRET_KEY="django-insecure--xxxxxxxxxxxx"
+$Env:OAUTH_SERVER_BASEURL="https://localhost:5004"
+$Env:API_BASEURL="https://localhost:5005"
 ```
 
 - Modify code and debug in docker/application folder and test run.
 
-```console
+```comandline
 python manage.py migrate
-python manage.py runserver
+```
+
+- Add super user.
+
+```comandline
+python manage.py createsuperuser
+```
+
+- Add custom provider as social application
+
+```http
+http://localhost:8000/accounts/customprovider/login/callback/
 ```
 
 #### Docker-compose development
@@ -65,15 +78,9 @@ DATABASES = {
 
 ```
 
-- Change SECRET_KEY in the same file as below.
-
-```python
-SECRET_KEY = os.environ.get("SECRET_KEY")
-```
-
 - Run with other image using docker-compose.
 
-```console
+```comandline
 cd docker
 
 docker-compose up -d --force-recreate
@@ -81,18 +88,7 @@ docker-compose up -d --force-recreate
 docker-compose down -v
 ```
 
-#### Update image tab and upload
-
-- Modify tag on docker-compose.yaml.
-- Upload each images to ACR.
-
-```console
-az acr login --name jufukuacr01.azurecr.io
-
-docker-compose push
-```
-
-### Running on docker-desktop
+### Running on local kubernetes cluster using docker-desktop
 
 - Deploy Ingres on docker-desktop.
 
@@ -103,7 +99,7 @@ kubectl create namespace myapps
 
 helm upgrade --install ingress-nginx ingress-nginx --repo https://kubernetes.github.io/ingress-nginx --namespace myapps
 
-openssl req -x509 -nodes -days 365 -newkey rsa:2048 -keyout rsa.key -out rsa.crt -subj "/CN=admin.jfadm170.net" -addext "subjectAltName = DNS:admin.jfadm170.net"
+openssl req -x509 -nodes -days 365 -newkey rsa:2048 -keyout rsa.key -out rsa.crt -subj "/CN=xxx.xxx.xxx" -addext "subjectAltName = DNS:xxx.xxx.xxx"
 
 openssl pkcs12 -export -in rsa.crt -inkey rsa.key -out rsa.pfx
 
@@ -117,11 +113,36 @@ del rsa.*
 - Deploy resouces.
 
 ```comandline
+kubectl config use-context docker-desktop
 
 helm upgrade --install jufukuproject-release ./helm --namespace myapps
 
-kubectl port-forward --namespace=myapps service/ingress-nginx-controller 8080:443
+```
 
+- Add Host on hosts file.
+
+```comandline
+xxx.xxx.xxx      127.0.0.1
+```
+
+- Add super user.
+
+```comandline
+kubectl get pod -n myapps
+
+kubectl exec -it jufuku-web-dplmnt-xxxxxxxx -n myapps -c application -- /bin/sh
+
+python manage.py createsuperuser
+```
+
+- Add custom provider as social application
+
+```http
+https://xxx.xxx.xxx/accounts/customprovider/login/callback/
+```
+
+```comandline
+kubectl port-forward --namespace=myapps service/ingress-nginx-controller 443:443
 ```
 
 - (options) Remove resouces from docker-desktop.
@@ -133,6 +154,18 @@ helm uninstall jufukuproject-release -n=myapps
 kubectl delete pvc jufuku-vol-static-pvc -n=myapps
 
 kubectl delete pvc my-vol-jufuku-db-sttflst-0 -n=myapps
+
+```
+
+#### Update image tab and upload
+
+- Modify tag on docker-compose.yaml.
+- Upload each images to ACR.
+
+```console
+az acr login --name jufukuacr01
+
+docker-compose push
 ```
 
 ## Deploy to Azure
@@ -166,7 +199,7 @@ helm repo add ingress-nginx https://kubernetes.github.io/ingress-nginx
 
 helm repo update
 
-helm install ingress-nginx ingress-nginx/ingress-nginx --namespace myapps --set controller.ingressClassResource.name=ingress-nginx --set controller.replicaCount=2 --set controller.nodeSelector."kubernetes\.io/os"=linux --set defaultBackend.nodeSelector."kubernetes\.io/os"=linux --set controller.service.annotations."service\.beta\.kubernetes\.io/azure-load-balancer-health-probe-request-path"=/healthz -f t2-ingress-controller.yaml
+helm install ingress-nginx ingress-nginx/ingress-nginx --namespace myapps --set controller.ingressClassResource.name=ingress-nginx --set controller.replicaCount=2 --set controller.nodeSelector."kubernetes\.io/os"=linux --set defaultBackend.nodeSelector."kubernetes\.io/os"=linux --set controller.service.annotations."service\.beta\.kubernetes\.io/azure-load-balancer-health-probe-request-path"=/healthz -f jufuku-ingress-controller.yaml
 
 az acr import --name jufukuacr01 --source quay.io/jetstack/cert-manager-controller:v1.8.0 --image jetstack/cert-manager-controller:v1.8.0
 
@@ -193,11 +226,23 @@ az aks get-credentials --resource-group rg4containers --name jufukuk8s01
 
 helm upgrade --install jufukuproject-release ./helm --namespace myapps -f ./helm/prodvalues.yaml
 
+
+```
+
+- (options) Remove resouces from docker-desktop.
+
+```comandline
+
+helm uninstall jufukuproject-release -n=myapps
+
+kubectl delete pvc jufuku-vol-static-pvc -n=myapps
+
+kubectl delete pvc my-vol-jufuku-db-sttflst-0 -n=myapps
 ```
 
 ## Upload git
 
-- Remove secret strings from prodvalues.yaml
+- Remove secret strings from all files.
 - Upload git
 
 ```comandline
@@ -211,6 +256,8 @@ git push -u origin main
 ## Useful commands for trouble shooting
 
 ```commandline
+kubectl proxy
+
 kubectl -n kubernetes-dashboard create token admin-user
 
 kubectl get ingressclass --all-namespaces

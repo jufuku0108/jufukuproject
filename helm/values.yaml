@@ -22,7 +22,7 @@ projectRoot:
             containers:
               web:
                 name: web
-                image: jufukuacr01.azurecr.io/web:v1.1.0
+                image: jufukuacr01.azurecr.io/web:v1.4.0
                 ports:
                 - containerPort: 80
                 command:
@@ -41,10 +41,12 @@ projectRoot:
                       name: jufuku-configmap
                       key: APP_HOST_NAME
                 resources: {}
-
+                volumeMounts:
+                - mountPath: /static
+                  name: vol-static
               application:
                 name: application
-                image: jufukuacr01.azurecr.io/application:v1.4.0
+                image: jufukuacr01.azurecr.io/application:v1.6.0
                 tty: true
                 ports:
                 - containerPort: 8000
@@ -88,9 +90,19 @@ projectRoot:
                     configMapKeyRef:
                       name: jufuku-configmap
                       key: POSTGRES_PORT
+                - name: OAUTH_SERVER_BASEURL
+                  valueFrom:
+                    configMapKeyRef:
+                      name: jufuku-configmap
+                      key: OAUTH_SERVER_BASEURL
+                - name: API_BASEURL
+                  valueFrom:
+                    configMapKeyRef:
+                      name: jufuku-configmap
+                      key: API_BASEURL
                 resources: {}
                 volumeMounts:
-                - mountPath: /codes/static
+                - mountPath: /code/static
                   name: vol-static
             volumes:
             - name: vol-static
@@ -114,7 +126,7 @@ projectRoot:
           spec:
             containers:
               name: db
-              image: jufukuacr01.azurecr.io/db:v1.0.0
+              image: jufukuacr01.azurecr.io/db:v1.10.0
               env:
               - name: PGDATA
                 valueFrom:
@@ -142,12 +154,13 @@ projectRoot:
               volumeMounts:
               - mountPath: /var/lib/postgresql/data
                 name: my-vol
+                subPath: database
         volumeClaimTemplates:
           metadata:
             name: my-vol
           spec:
             accessModes: ["ReadWriteOnce"]
-            storageClassName: "managed-csi"
+            storageClassName: hostpath
             resources:
               requests:
                 storage: 5Gi
@@ -185,13 +198,15 @@ projectRoot:
         SECRET_KEY: django-insecure--jufuku-testmode
         PGDATA: /var/lib/postgresql/data/database
         POSTGRES_ENGINE: django.db.backends.postgresql_psycopg2
-        POSTGRES_DB: postgres
-        POSTGRES_USER: user01
-        POSTGRES_PASSWORD: hogehoge01
+        POSTGRES_DB: xxx
+        POSTGRES_USER: xxx
+        POSTGRES_PASSWORD: xxx
         POSTGRES_HOST: dbsvc
         POSTGRES_PORT: '5432'
         APP_SERVICE_NAME: localhost:8000
-        APP_HOST_NAME: admin.jfadm170.net
+        APP_HOST_NAME: xxx.xxx.xxx
+        OAUTH_SERVER_BASEURL: htts://xxx.xxx.xxx
+        API_BASEURL: htts://xxx.xxx.xxx
     storageClass:
       azurefilecsi:
         metadata:
@@ -206,7 +221,7 @@ projectRoot:
         metadata:
           name: jufuku-vol-static-pvc
         spec:
-          storageClassName: azurefile-csi
+          storageClassName: hostpath
           accessModes:
           - ReadWriteMany
           resources:
@@ -216,20 +231,20 @@ projectRoot:
       metadata:
         name: jufuku-ingress
         annotations:
-          nginx.ingress.kubernetes.io/rewrite-target: /$2
+          # nginx.ingress.kubernetes.io/rewrite-target: /$2
           nginx.ingress.kubernetes.io/use-regex: "true"
           cert-manager.io/cluster-issuer: letsencrypt
       spec:
         ingressClassName: nginx
         tls:
         - hosts:
-          - admin.jfadm170.net
+          - xxx.xxx.xxx
           secretName: jufuku-secret
         rules:
-        - host: admin.jfadm170.net
+        - host: xxx.xxx.xxx
           http:
             paths:
-            - path: /
+            - path: /*
               pathType: Prefix
               backend:
                 service:
